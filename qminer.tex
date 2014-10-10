@@ -107,7 +107,9 @@ Jamova cesta 39, Ljubljana, Slovenia \\
    QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL.
 
    \subsection{Text processing, classification and regression}
-      This example shows how to extract features from the movie dataset and use them to build classification and regression models to predict movie genre and rating.
+      The example in this section demonstrates how to extract features from the movie dataset to build classification and regression models to predict movie genre and rating. 
+      
+      First, we import the analytics module which provides machine learning algorithm. Next, we load the data and enumerate features we would to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}). 
 
       \begin{lstlisting}[caption={Text mining: storage, feature extraction, classification and regression}] 	
       // Import analytics module
