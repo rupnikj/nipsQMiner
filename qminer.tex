@@ -16,7 +16,7 @@
 \definecolor{greencomments}{rgb}{0,0.5,0}
 \definecolor{cyan}{rgb}{0.0,0.6,0.6}
 
-
+\renewcommand{\lstlistingname}{Code fragment}
 
 
 \lstdefinelanguage{JavaScript}{
@@ -110,8 +110,33 @@ QMiner lets you get from data to working models exposed through web service API 
 
 \subsection{Text processing, classification and regression}
 
-\subsection{Time series processing}
+This example shows how to extract features from the movie dataset and use them to build classification and regression models to predict movie genre and rating.
 
+\begin{lstlisting}[caption={Text mining: storage, feature extraction, classification and regression}] 	
+// Import analytics module
+var analytics = require("analytics.js");
+// Loading in the dataset.
+qm.load.jsonFile(Movies, "./sandbox/movies/movies.json");
+ 	
+// Declare the features we will use to build genre classification models
+var genreFeatures = [
+    { type: "text", source: "Movies", field: "Title" },
+    { type: "text", source: "Movies", field: "Plot" },
+    { type: "join", source: { store: "Movies", join: "Actor" } },
+    { type: "join", source: { store: "Movies", join: "Director"} }
+];
+// Create a model for the Genres field, using all the movies as training set.
+var genreModel = analytics.newBatchModel(Movies.recs,
+                    genreFeatures, Movies.field("Genres"));
+// Predict genres of a new movie
+var newMovie = qm.store("Movies").newRec(/*{...}*/);
+var result = genreModel.predict(newMovie);
+\end{lstlisting}
+
+
+
+\subsection{Time series processing}
+The following example demonstrates how to perform time series resampling, feature vector computation and prediction.
 
 \begin{figure}[h]
 \begin{center}
@@ -120,45 +145,53 @@ QMiner lets you get from data to working models exposed through web service API 
 \caption{Time series processing architecture}
 \end{figure}
 
-\begin{lstlisting}[caption=Time series processing]
- 	// Initialize resamper from Raw to Resampled store. This results in
- 	// in an equaly spaced time series with 10 second interval.
- 	Raw.addStreamAggr({ name: "Resample10second", type: "resampler",
- 	  outStore: "Resampled", timestamp: "Time",
- 	  fields: [ { name: "Value", interpolator: "previous" } ],
- 	  createStore: false, interval: 10 * 1000
- 	});
- 	// Initialize stream aggregates on Resampled store for computing
- 	// 1 minute and 10 minute exponential moving averages.
- 	Resampled.addStreamAggr({ name: "tick", type: "timeSeriesTick",
- 	  timestamp: "Time", value: "Value" });
- 	Resampled.addStreamAggr({ name: "ema1m", type: "ema",
- 	  inAggr: "tick", emaType: "previous", interval: 60000, initWindow: 10000 });
- 	Resampled.addStreamAggr({ name: "ema10m", type: "ema",
- 	  inAggr: "tick", emaType: "previous", interval: 600000, initWindow: 10000
- 	});
- 	// Buffer for keeping track of the record from 1 minute ago
- 	Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6});
- 	// Declare features from the resampled timeseries
- 	var ftrSpace = analytics.newFeatureSpace([
- 	    { type: "numeric", source: "Resampled", field: "Value" },
- 	    { type: "numeric", source: "Resampled", field: "Ema1" },
- 	    { type: "numeric", source: "Resampled", field: "Ema2" },
- 	    { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
- 	]);
- 	// Initialize linear regression model.
- 	var linreg = analytics.newRecLinReg({ dim: ftrSpace.dim, forgetFact: 0.9999 });
- 	// We register a trigger to Resampled store
- 	Resampled.addTrigger({ onAdd: function (val) {
- 	        // Get the latest value for EMAs
- 	        val.Ema1 = Resampled.getStreamAggr("ema1m").EMA;
- 	        val.Ema2 = Resampled.getStreamAggr("ema10m").EMA;
- 	        // Get the id of the record from a minute ago.
- 	        var trainRecId = Resampled.getStreamAggr("delay").last;
- 	        // Update the model, once we have at leats 1 minute worth of data
- 	        linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
- 	    }
- 	});
+\begin{lstlisting}[caption=Time series processing] 	
+// Initialize resamper from Raw to Resampled store. This results in
+// in an equaly spaced time series with 10 second interval.
+Raw.addStreamAggr({
+    name: "Resample10second", type: "resampler",
+    outStore: "Resampled", timestamp: "Time",
+    fields: [{ name: "Value", interpolator: "previous" }],
+    createStore: false, interval: 10 * 1000
+});
+// Initialize stream aggregates on Resampled store for computing
+// 1 minute and 10 minute exponential moving averages.
+Resampled.addStreamAggr({
+    name: "tick", type: "timeSeriesTick",
+    timestamp: "Time", value: "Value"
+});
+Resampled.addStreamAggr({
+    name: "ema1m", type: "ema",
+    inAggr: "tick", emaType: "previous", interval: 60000
+});
+Resampled.addStreamAggr({
+    name: "ema10m", type: "ema",
+    inAggr: "tick", emaType: "previous", interval: 600000
+});
+// Buffer for keeping track of the record from 1 minute ago
+Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6 });
+
+// Declare features from the resampled timeseries
+var ftrSpace = analytics.newFeatureSpace([
+    { type: "numeric", source: "Resampled", field: "Value" },
+    { type: "numeric", source: "Resampled", field: "Ema1" },
+    { type: "numeric", source: "Resampled", field: "Ema2" },
+    { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
+]);
+// Initialize linear regression model.
+var linreg = analytics.newRecLinReg({ dim: ftrSpace.dim, forgetFact: 1.0 });
+// We register a trigger to Resampled store
+Resampled.addTrigger({
+    onAdd: function (val) {
+        // Get the latest value for EMAs
+        val.Ema1 = Resampled.getStreamAggr("ema1m").val.Val;
+        val.Ema2 = Resampled.getStreamAggr("ema10m").val.Val;
+        // Get the id of the record from a minute ago.
+        var trainRecId = Resampled.getStreamAggr("delay").val.last;;
+        // Update the model
+        linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
+    }
+});
 
 \end{lstlisting}
 
