@@ -214,19 +214,16 @@ The following example demonstrates how to perform time series prediction. The ex
 
 
 \subsection{Graph analysis}
+QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}. 
+The script in code fragment 3 is an example of loading a graph, computing communities and visualizing the results.
 
-QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}.
-The following example shows loading of a graph, computing communities and visualizing the results.
-
-The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes represent co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network.
-
+After importing the required modules for graph analysis and visualization, an edge-list graph file is loaded into a new undirected graph. The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes indicate co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network. Following the simplification of the graph by removing weekly connected nodes (with degree 3 or less), the Clauset-Newman-Moore \cite{clauset-newman-moore} community detection algorithm is applied to compute communities. In the final step the graph is plotted using force-directed layout, with node colors corresponding to communities. The complete script in Code fragment 3 is written in JavaScript, but some of the components, such as community detection algorithm are executing in highly optimized C++ SNAP code.
 \begin{figure}[h]
 \begin{center}
-\includegraphics[scale=0.25]{communitiestest.jpg}
-\caption{Communities test figure}
+\includegraphics[scale=0.25]{communities_labeled.jpg} 
+\caption{Communities of co-authoring graph}
 \end{center}
 \end{figure}
-
       \begin{lstlisting}[caption=Graph analysis]
       // Import snap module.
       snap = require("snap.js");
@@ -242,10 +239,8 @@ The graph represents co-authoring network of Slovenian researchers from biotechn
       // plotting the graph with colors of colors corresponding to communities
       viz.drawGraph(g, "graphCNM.html", { "color": CmtyCNM });
       \end{lstlisting}
+The results of analysis shows that the co-authoring graph has 12 communities labeled from 1 to 12 in Figure 2. Three smaller communities (10, 11 and 12) are completely disconnected, while the rest make a connected component. By supporting SNAP, QMiner enables further rich graph analysis in a easy to use JavaScript interface, which can be especially useful combined with the supported scalable machine learning methods.
 
-The result shows that...
-
-The complete script is written in JS, while the Clauset-Newman-Moore community detection algorithm \cite{clauset-newman-moore} executes in highly optimized C++ SNAP code.
 
 \subsubsection*{Acknowledgments}
    The authors gratefully acknowledge that the funding for this work was provided by the project X-LIKE (ICT-257790-STREP)\cite{xlike}.
