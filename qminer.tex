@@ -90,28 +90,26 @@ The paper presents the main features, capabilities and design choices of the lib
 is followed by examples.\end{abstract}
 
 \section{Introduction}
-QMiner grew out of several EU Framework Programme projects in the areas of text, web, and stream mining over the last couple of years. The developed solutions focus on interactivity and operate in real-time on data sets of hundreds of gigabytes on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
+QMiner system grew out of several EU Framework Programme projects in the areas of text, web, and stream mining over the last couple of years. The developed solutions focus on interactivity and operate in real-time on data sets of hundreds of gigabytes on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
+
 QMiner applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API it is easy to compose complete data processing pipelines and integrate with other systems via RESTful web services. The backend is implemented in C++ and can be included as a library into custom C++ projects, thus providing them with stream processing and data analytics capabilities.
-QMiner is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.We will first present the core components of the library and then present some examples using the javascript API.
+
+QMiner is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.
+
+The paper is organised as follow. We first describe the main architectural building blocks, followed with list of features that, when taken together, uniquely position QMiner in the landscape of open-source analytics packages. We finish the paper with three examples, which showcase how one can quickly build machine-learning applications.
 
 \section{Building blocks}
 The core blocks of the library are as follows.
 
-\textbf{Storage and index layer:}
+\textbf{Storage and index layer:} The basic storage abstractions are similar to databases: the data is organized around stores (tables), one data point inside a store corresponds to a record (row or instance) and one record consists of one or more fields (columns or features). Index layer provides support for indexing and retrieving records. Currently, the system contains several indices: (a) inverted index, used to index discrete values and free text, and (b) geospatial index, which can be used to index geographic locations presented as longitude and latitude pairs. There are several additional indices in implementation at the moment, which will extend the system: (c) B-tree, used to index linearly ordered data types, such as number and dates, and (d) local proximity hashing, used to answer nearest neighbour queries on high-dimensional data such as sparse vectors. Indices can be accessed directly through a JSon-based query languages. The indices are also used by Analytics layer for various tasks, such as describing and extracting features, and for sampling.
 
-\textbf{stream aggregates:}
+\textbf{Stream aggregates:} Aggregates correspond to algorithms which take a stream of records, and maintain some aggregate statistics of the stream. The aggregate connect to a store, and update their state as new records are added to the store. QMiner contains the a large collection of stream aggregates, e.g. statistical moments, exponential moving average, resampling and merging of streams, interpolation, extrapolation. In addition, when working in javascript API, new stream aggregates can be implemented directly in javascript.
 
-\textbf{feature extractors:} A feature extractor enables mapping records to linear algebra vectors (supports dense and sparse vectors). 
-The core framework for feature extractors enables constructing and gluing several types of feature extractors and automatically performs all the necessary bookkeeping. 
-Feature extractors include: numeric feature extractors, text feature extractors (bag of words), element indicator vectors and set indicator vectors (multi-label). In addition, when working with the javascript API, feature extractors implemented as javascript functions are supported.
+\textbf{Feature extractors:} A feature extractor enables mapping records to linear algebra vectors (supports dense and sparse vectors). The core framework for feature extractors enables constructing and gluing several types of feature extractors and automatically performs all the necessary bookkeeping. Feature extractors include: numeric feature extractors, text feature extractors (bag of words), element indicator vectors and set indicator vectors (multi-label). In addition, when working with the javascript API, feature extractors implemented as javascript functions are supported.
 
-\textbf{analytics:} The analytics components include several popular machine learning algorithms for clustering, dimensionality reduction, classification, regression and
- active-learning.
+\textbf{Linear algebra:} The library includes manipulation of several implementations of vectors and matrices. Algorithms enable solving linear systems and computing several matrix decompositions. Randomization based algorithms enable solving large scale problems, such as SVDs on large structured or sparse matrices. The QMiner library can optionally be compiled with Intel MKL library which is highly optimized.
 
-\textbf{linear algebra:} The library includes manipulation of several implementations of vectors and matrices. Algorithms enable solving linear systems and computing several
-matrix decompositions. Randomization based algorithms enable solving large scale problems, such as SVDs on large structured or sparse matrices. The QMiner library can optionally be compiled with Intel MKL library which is highly optimized.
-
-
+\textbf{Analytics:} The analytics components combine all above components to implement various popular machine learning algorithms for clustering, dimensionality reduction, classification, regression and active-learning. The implementations can be easily applied directly to data stored in the storage layer.
 
 
 \section{Features}
@@ -125,18 +123,18 @@ We now list some of the notable features of QMiner.
 
 \textbf{Probabilistic joins between tables:} For some operations computing a complete join between tables is not necessary. For example, to compute the gender distribution of visitors of a particular web page, we do not really need a complete list of visitors for that particular web page. What suffices is a statistically representative sample. QMiner supports several sampling techniques for achieving this, and integrates the support for probabilistic joins in query language and feature extractors.
 
-\textbf{Efficiency and fast prototyping:} All main components of the library are implemented in C++ and are optimized for memory usage and computational speed. This involves
-the data store, indexing, feature extractors, linear algebra, stream processing components, several machine learning and graph mining algorithms (based on SNAP library). Most of the
-core functionality is exposed in the javascript API which enables fast prototyping and deploying as RESTful services.
+\textbf{Efficiency and fast prototyping:} All main components of the library are implemented in C++ and are optimized for memory usage and computational speed. This involves the data store, indexing, feature extractors, linear algebra, stream processing components, several machine learning and graph mining algorithms (based on SNAP library). Most of the core functionality is exposed in the javascript API which enables fast prototyping and deploying as RESTful services.
 
 
 \section{Examples}
-   QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL.
 
-   \subsection{Text processing, classification and regression}
-      The example in this section demonstrates how to extract features from the movie dataset to build classification and regression models to predict movie genre and rating. 
-      
-      First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). (Source is the \emph{data store} from which we want to extract the feature; data store very roughly corresponds to table in relational databases.) We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}). 
+QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL.
+
+\subsection{Text processing, classification and regression}
+
+The example in this section demonstrates how to extract features from the movie dataset to build classification and regression models to predict movie genre and rating.
+
+      First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). (Source is the \emph{data store} from which we want to extract the feature; data store very roughly corresponds to table in relational databases.) We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}).
 
       \begin{lstlisting}[caption={Text mining: storage, feature extraction, classification and regression}] 	
       // Import analytics module
@@ -159,8 +157,9 @@ core functionality is exposed in the javascript API which enables fast prototypi
       var result = genreModel.predict(newMovie);
       \end{lstlisting}
 
-   \subsection{Time series processing}
-      The following example demonstrates how to perform time series resampling, feature vector computation and prediction.
+\subsection{Time series processing}
+
+The following example demonstrates how to perform time series resampling, feature vector computation and prediction.
 
       \begin{figure}[h]
       \begin{center}
@@ -216,34 +215,31 @@ core functionality is exposed in the javascript API which enables fast prototypi
               linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
           }
       });
-
       \end{lstlisting}
 
 
-
-
-
 \subsection{Graph analysis}
-QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}. 
+
+QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}.
 This is an example of loading a graph, computing communities and visualizing the results.
 
 The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes represent co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network.
 
 \begin{figure}[h]
 \begin{center}
-\includegraphics[scale=0.25]{communitiestest.jpg} 
+\includegraphics[scale=0.25]{communitiestest.jpg}
 \caption{Communities test figure}
 \end{center}
 \end{figure}
 
-\begin{lstlisting}[caption=Graph analysis] 
+\begin{lstlisting}[caption=Graph analysis]
 // Import snap module.
 snap = require("snap.js");
 // Import visualization module.
 viz = require("visualization.js");
 // Loading a graph file and creating a new undirected graph.
 var g = snap.newUGraph("biotechnology_2013.edg");
-// Simplifying graph by removing all the nodes with degree 
+// Simplifying graph by removing all the nodes with degree
 // smaller or equal to 3.
 var g = snap.removeNodes(g, 3);
 // computing communities using Clauset-Newman-Moore algorithm
