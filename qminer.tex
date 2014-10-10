@@ -86,22 +86,51 @@ Jamova cesta 39, Ljubljana, Slovenia \\
 \maketitle
 
 \begin{abstract}
-QMiner is an opensource analytics platform for performing large scale data analysis.
+QMiner is an open source analytics platform for performing large scale data analysis.
 The paper presents the main features, capabilities and design choices of the library, which
 is followed by examples.
 \end{abstract}
 
 \section{Introduction}
-QMiner grew from projects in the areas of text, web and stream mining that Artificial Intelligence group at Jožef Stefan Institute was involved in over the last couple of years. We wanted developed solutions to be interactive and operate in real-time on data sets of 100s of GBs while still using the computational resources we have available. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
+QMiner grew from several EU Framework Programme projects in the areas of text, web, and stream mining over the last couple of years. The developed solutions focus on interactivity and operate in real-time on data sets of 100s of GBs on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
 QMiner applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API it is easy to compose complete data processing pipelines and integrate with other systems via RESTful web services. The backend is implemented in C++ and can be included as a library into custom C++ projects, thus providing them with stream processing and data analytics capabilities.
 QMiner is available as open source project in GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.
+We will first present the core components of the library and then present some examples using the javascript API.
+
+\section{Building blocks}
+The core blocks of the library are as follows.
+
+\textbf{Storage and index layer:}
+
+\textbf{stream aggregates:}
+
+\textbf{feature extractors:} A feature extractor enables mapping records to linear algebra vectors (supports dense and sparse vectors). 
+The core framework for feature extractors enables constructing and gluing several types of feature extractors and automatically performs all the necessary bookkeeping. 
+Feature extractors include: numeric feature extractors, text feature extractors (bag of words), element indicator vectors and set indicator vectors (multi-label). In addition, when working with the javascript API, feature extractors implemented as javascript functions are supported.
+
+\textbf{analytics:} The analytics components include several popular machine learning algorithms for clustering, dimensionality reduction, classification, regression and
+ active-learning.
+
+\textbf{linear algebra:} The library includes manipulation of several implementations of vectors and matrices. Algorithms enable solving linear systems and computing several
+matrix decompositions. Randomization based algorithms enable solving large scale problems, such as SVDs on large structured or sparse matrices. The QMiner library can optionally be compiled with Intel MKL library which is highly optimized.
+
+
 
 
 \section{Features}
-Connecting storage, indexing and analytics – QMiner stores and indexes the data in a way that makes the implemented machine learning methods more scalable. Computing feature vectors from stored records tries to reduce any duplication of data in the process and relies heavily on the integrated indexing and its features (e.g. probabilistic joins) to make the transformations faster. Data schemas provide types for directly storing vectors and sparse vectors as part of records.
-Multimodal data support – QMiner provides native support for handling and learning from unstructured data such as text or graphs. For example, full text search, aggregation over text fields, creating and storing bag-of-words vectors directly in the data stores, and full integration of Stanford graph analysis library SNAP in the C++ and JavaScript APIs
-Processing streaming data – QMiner provides building blocks for processing and learning from streams of text documents, website logs or numeric streams. For example, pipeline-able stream aggregates for maintaining aggregate statistics over the stream, and machine learning algorithms for learning from stream.
-Probabilistic joins between tables – For some operations computing a complete join between tables is not necessary. For example, to compute the gender distribution of visitors of a particular web page, we do not really need a complete list of visitors for that particular web page. What suffices is a statistically representative sample. QMiner supports several sampling techniques for achieving this, and integrates the support for probabilistic joins in query language and feature extractors.
+We now list some of the notable features of QMiner.
+
+\textbf{Connecting storage, indexing and analytics:} QMiner stores and indexes the data in a way that makes the implemented machine learning methods more scalable. Computing feature vectors from stored records aims at reducing duplication of data in the process and relies heavily on the integrated indexing and its features (e.g. probabilistic joins) to make the transformations faster. Data schemas provide types for directly storing vectors and sparse vectors as part of records.
+
+\textbf{Multimodal data support:} QMiner provides native support for handling and learning from unstructured data such as text or graphs. For example, full text search, aggregation over text fields, creating and storing bag-of-words vectors directly in the data stores, and full integration of Stanford graph analysis library SNAP in the C++ and JavaScript APIs
+
+\textbf{Processing streaming data:} QMiner provides building blocks for processing and learning from streams of text documents, website logs or numeric streams. For example, pipeline-able stream aggregates for maintaining aggregate statistics over the stream, and machine learning algorithms for learning from stream.
+
+\textbf{Probabilistic joins between tables:} For some operations computing a complete join between tables is not necessary. For example, to compute the gender distribution of visitors of a particular web page, we do not really need a complete list of visitors for that particular web page. What suffices is a statistically representative sample. QMiner supports several sampling techniques for achieving this, and integrates the support for probabilistic joins in query language and feature extractors.
+
+\textbf{Efficiency and fast prototyping:} All main components of the library are implemented in C++ and are optimized for memory usage and computational speed. This involves
+the data store, indexing, feature extractors, linear algebra, stream processing components, several machine learning and graph mining algorithms (based on SNAP library). Most of the
+core functionality is exposed in the javascript API which enables fast prototyping and deploying as RESTful services.
 
 
 \section{Examples}
