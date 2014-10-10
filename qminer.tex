@@ -226,8 +226,37 @@ Resampled.addTrigger({
 
 
 \subsection{Graph analysis}
+QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}. 
+This is an example of loading a graph, computing communities and visualizing the results.
 
+The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes represent co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network.
 
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.25]{communitiestest.jpg} 
+\caption{Communities test figure}
+\end{center}
+\end{figure}
+
+\begin{lstlisting}[caption=Graph analysis] 
+// Import snap module.
+snap = require("snap.js");
+// Import visualization module.
+viz = require("visualization.js");
+// Loading a graph file and creating a new undirected graph.
+var g = snap.newUGraph("biotechnology_2013.edg");
+// Simplifying graph by removing all the nodes with degree 
+// smaller or equal to 3.
+var g = snap.removeNodes(g, 3);
+// computing communities using Clauset-Newman-Moore algorithm
+var CmtyCNM = snap.communityDetection(g, "cnm");
+// plotting the graph with colors of colors corresponding to communities
+viz.drawGraph(g, "graphCNM.html", { "color": CmtyCNM });
+\end{lstlisting}
+
+The result shows that...
+
+The complete script is written in JS, while the Clauset-Newman-Moore community detection algorithm \cite{clauset-newman-moore} executes in highly optimized C++ SNAP code.
 
 \section{Conclusions}
 
