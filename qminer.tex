@@ -2,6 +2,55 @@
 \usepackage{nips14submit_e,times}
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{graphicx}
+
+
+
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{lightgray}{rgb}{1,1,1}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{redstrings}{rgb}{0.64,0.08,0.08}
+\definecolor{blue}{rgb}{0,0,1}
+\definecolor{greencomments}{rgb}{0,0.5,0}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+
+
+
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, null},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{greencomments}\ttfamily,
+  stringstyle=\color{redstrings}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+
+
 %\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
 
 
@@ -62,6 +111,57 @@ QMiner lets you get from data to working models exposed through web service API 
 \subsection{Text processing, classification and regression}
 
 \subsection{Time series processing}
+
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{timeSeries.png}
+\end{center}
+\caption{Time series processing architecture}
+\end{figure}
+
+\begin{lstlisting}[caption=Time series processing]
+ 	// Initialize resamper from Raw to Resampled store. This results in
+ 	// in an equaly spaced time series with 10 second interval.
+ 	Raw.addStreamAggr({ name: "Resample10second", type: "resampler",
+ 	  outStore: "Resampled", timestamp: "Time",
+ 	  fields: [ { name: "Value", interpolator: "previous" } ],
+ 	  createStore: false, interval: 10 * 1000
+ 	});
+ 	// Initialize stream aggregates on Resampled store for computing
+ 	// 1 minute and 10 minute exponential moving averages.
+ 	Resampled.addStreamAggr({ name: "tick", type: "timeSeriesTick",
+ 	  timestamp: "Time", value: "Value" });
+ 	Resampled.addStreamAggr({ name: "ema1m", type: "ema",
+ 	  inAggr: "tick", emaType: "previous", interval: 60000, initWindow: 10000 });
+ 	Resampled.addStreamAggr({ name: "ema10m", type: "ema",
+ 	  inAggr: "tick", emaType: "previous", interval: 600000, initWindow: 10000
+ 	});
+ 	// Buffer for keeping track of the record from 1 minute ago
+ 	Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6});
+ 	// Declare features from the resampled timeseries
+ 	var ftrSpace = analytics.newFeatureSpace([
+ 	    { type: "numeric", source: "Resampled", field: "Value" },
+ 	    { type: "numeric", source: "Resampled", field: "Ema1" },
+ 	    { type: "numeric", source: "Resampled", field: "Ema2" },
+ 	    { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
+ 	]);
+ 	// Initialize linear regression model.
+ 	var linreg = analytics.newRecLinReg({ dim: ftrSpace.dim, forgetFact: 0.9999 });
+ 	// We register a trigger to Resampled store
+ 	Resampled.addTrigger({ onAdd: function (val) {
+ 	        // Get the latest value for EMAs
+ 	        val.Ema1 = Resampled.getStreamAggr("ema1m").EMA;
+ 	        val.Ema2 = Resampled.getStreamAggr("ema10m").EMA;
+ 	        // Get the id of the record from a minute ago.
+ 	        var trainRecId = Resampled.getStreamAggr("delay").last;
+ 	        // Update the model, once we have at leats 1 minute worth of data
+ 	        linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
+ 	    }
+ 	});
+
+\end{lstlisting}
+
 
 \subsection{Graph analysis}
 
