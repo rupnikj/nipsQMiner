@@ -92,14 +92,14 @@ is followed by examples.\end{abstract}
 \section{Introduction}
 QMiner system grew out of several EU Framework Programme projects in the areas of text, web, and stream mining over the last couple of years. The developed solutions focus on interactivity and operate in real-time on data sets of hundreds of gigabytes on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
 
-QMiner applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API it is easy to compose complete data processing pipelines and integrate with other systems via RESTful web services. The backend is implemented in C++ and can be included as a library into custom C++ projects, thus providing them with stream processing and data analytics capabilities.
+Applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API it is easy to compose complete data processing pipelines and integrate with other systems via RESTful web services. The backend is implemented in C++ and can be included as a library into custom C++ projects, thus providing them with stream processing and data analytics capabilities.
 
-QMiner is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.
+The system is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.
 
 The paper is organised as follow. We first describe the main architectural building blocks, followed with list of features that, when taken together, uniquely position QMiner in the landscape of open-source analytics packages. We finish the paper with three examples, which showcase how one can quickly build machine-learning applications.
 
 \section{Building blocks}
-The core blocks of the library are as follows.
+The core blocks of the system are as follows.
 
 \textbf{Storage and index layer:} The basic storage abstractions are similar to databases: the data is organized around stores (tables), one data point inside a store corresponds to a record (row or instance) and one record consists of one or more fields (columns or features). Index layer provides support for indexing and retrieving records. Currently, the system contains several indices: (a) inverted index, used to index discrete values and free text, and (b) geospatial index, which can be used to index geographic locations presented as longitude and latitude pairs. There are several additional indices in implementation at the moment, which will extend the system: (c) B-tree, used to index linearly ordered data types, such as number and dates, and (d) local proximity hashing, used to answer nearest neighbour queries on high-dimensional data such as sparse vectors. Indices can be accessed directly through a JSon-based query languages. The indices are also used by Analytics layer for various tasks, such as describing and extracting features, and for sampling.
 
@@ -220,8 +220,8 @@ The following example demonstrates how to perform time series resampling, featur
 
 \subsection{Graph analysis}
 
-QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}.
-This is an example of loading a graph, computing communities and visualizing the results.
+QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}. 
+The following example shows loading of a graph, computing communities and visualizing the results.
 
 The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes represent co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network.
 
@@ -232,28 +232,25 @@ The graph represents co-authoring network of Slovenian researchers from biotechn
 \end{center}
 \end{figure}
 
-\begin{lstlisting}[caption=Graph analysis]
-// Import snap module.
-snap = require("snap.js");
-// Import visualization module.
-viz = require("visualization.js");
-// Loading a graph file and creating a new undirected graph.
-var g = snap.newUGraph("biotechnology_2013.edg");
-// Simplifying graph by removing all the nodes with degree
-// smaller or equal to 3.
-var g = snap.removeNodes(g, 3);
-// computing communities using Clauset-Newman-Moore algorithm
-var CmtyCNM = snap.communityDetection(g, "cnm");
-// plotting the graph with colors of colors corresponding to communities
-viz.drawGraph(g, "graphCNM.html", { "color": CmtyCNM });
-\end{lstlisting}
+      \begin{lstlisting}[caption=Graph analysis]
+      // Import snap module.
+      snap = require("snap.js");
+      // Import visualization module.
+      viz = require("visualization.js");
+      // Loading a graph file and creating a new undirected graph.
+      var g = snap.newUGraph("biotechnology_2013.edg");
+      // Simplifying graph by removing all the nodes with degree
+      // smaller or equal to 3.
+      var g = snap.removeNodes(g, 3);
+      // computing communities using Clauset-Newman-Moore algorithm
+      var CmtyCNM = snap.communityDetection(g, "cnm");
+      // plotting the graph with colors of colors corresponding to communities
+      viz.drawGraph(g, "graphCNM.html", { "color": CmtyCNM });
+      \end{lstlisting}
 
 The result shows that...
 
 The complete script is written in JS, while the Clauset-Newman-Moore community detection algorithm \cite{clauset-newman-moore} executes in highly optimized C++ SNAP code.
-
-\section{Conclusions}
-   Concluding remarks.
 
 \subsubsection*{Acknowledgments}
    The authors gratefully acknowledge that the funding for this work was provided by the project X-LIKE (ICT-257790-STREP)\cite{xlike}.
