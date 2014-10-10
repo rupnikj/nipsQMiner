@@ -96,7 +96,7 @@ Applications are implemented in JavaScript, making it easy for novice users to g
 
 The system is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.
 
-The paper is organised as follow. We first describe the main architectural building blocks, followed with list of features that, when taken together, uniquely position QMiner in the landscape of open-source analytics packages. We finish the paper with three examples, which showcase how one can quickly build machine-learning applications.
+The paper is organised as follows. We first describe the main architectural building blocks, followed with list of features that, when taken together, uniquely position QMiner in the landscape of open-source analytics packages. We finish the paper with three examples, which showcase how one can quickly build machine-learning applications.
 
 \section{Building blocks}
 The core blocks of the system are as follows.
@@ -128,11 +128,11 @@ We now list some of the notable features of QMiner.
 
 \section{Examples}
 
-QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL.
+QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL. We will demonstrate the system on three different tasks: text classification, time series prediction and community detection on graphs.
 
 \subsection{Text processing, classification and regression}
 
-The example in this section demonstrates how to extract features from the movie dataset to build classification and regression models to predict movie genre and rating.
+The example in this section demonstrates how to extract features from the movie dataset to build classification models to predict movie genre.
 
 First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). (Source is the \emph{data store} from which we want to extract the feature; data store very roughly corresponds to table in relational databases.) We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}).
 
@@ -172,7 +172,7 @@ The example involves two \emph{data stores}: \texttt{Raw} and \texttt{Resampled}
 
       \begin{figure}[h]
       \begin{center}
-      \includegraphics[width=0.5\textwidth]{timeSeries.png}
+      \includegraphics[width=0.5\textwidth]{timeSeries2.png}
       \end{center}
       \caption{Time series processing architecture}\label{fig:timeSeries}
       \end{figure}
@@ -201,12 +201,12 @@ The example involves two \emph{data stores}: \texttt{Raw} and \texttt{Resampled}
       // We add the final stream aggregate that enriches the record and updates the regression model
       var s4 = Resampled.addStreamAggr(new function(){
           onAdd: function (rec) {
-              // Save the latest values of EMAs in the
+              // Enrich record
               rec.Ema1 = s1.getFlt();
               rec.Ema2 = s2.getFlt();
               // Get the id of the record from a minute ago.
               var trainRecId = s3.val.last;
-              // Update the model: the input is delayed by 1 minute and the output is the current value
+              // Update the regression model: the input is delayed by 1 minute and the output is the current value
               linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), rec.Value);
           }
       });
