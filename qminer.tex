@@ -1,10 +1,9 @@
 \documentclass{article} % For LaTeX2e
+
 \usepackage{nips14submit_e,times}
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{graphicx}
-
-
 
 \usepackage{listings}
 \usepackage{color}
@@ -88,14 +87,12 @@ Jamova cesta 39, Ljubljana, Slovenia \\
 \begin{abstract}
 QMiner is an open source analytics platform for performing large scale data analysis.
 The paper presents the main features, capabilities and design choices of the library, which
-is followed by examples.
-\end{abstract}
+is followed by examples.\end{abstract}
 
 \section{Introduction}
-QMiner grew from several EU Framework Programme projects in the areas of text, web, and stream mining over the last couple of years. The developed solutions focus on interactivity and operate in real-time on data sets of 100s of GBs on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
+QMiner grew out of several EU Framework Programme projects in the areas of text, web, and stream mining over the last couple of years. The developed solutions focus on interactivity and operate in real-time on data sets of hundreds of gigabytes on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
 QMiner applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API it is easy to compose complete data processing pipelines and integrate with other systems via RESTful web services. The backend is implemented in C++ and can be included as a library into custom C++ projects, thus providing them with stream processing and data analytics capabilities.
-QMiner is available as open source project in GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.
-We will first present the core components of the library and then present some examples using the javascript API.
+QMiner is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide and complete documentations of QMiner JavaScript APIs.We will first present the core components of the library and then present some examples using the javascript API.
 
 \section{Building blocks}
 The core blocks of the library are as follows.
@@ -134,95 +131,96 @@ core functionality is exposed in the javascript API which enables fast prototypi
 
 
 \section{Examples}
-QMiner lets you get from data to working models exposed through web service API in less then an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL.
+   QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of components implemented in C++ and libraries such as Intel MKL.
+
+   \subsection{Text processing, classification and regression}
+      The example in this section demonstrates how to extract features from the movie dataset to build classification and regression models to predict movie genre and rating. 
+      
+      First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). (Source is the \emph{data store} from which we want to extract the feature; data store very roughly corresponds to table in relational databases.) We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}). 
+
+      \begin{lstlisting}[caption={Text mining: storage, feature extraction, classification and regression}] 	
+      // Import analytics module
+      var analytics = require("analytics.js");
+      // Loading in the dataset.
+      qm.load.jsonFile(Movies, "./sandbox/movies/movies.json");
+       	
+      // Declare the features we will use to build genre classification models
+      var genreFeatures = [
+          { type: "text", source: "Movies", field: "Title" },
+          { type: "text", source: "Movies", field: "Plot" },
+          { type: "join", source: { store: "Movies", join: "Actor" } },
+          { type: "join", source: { store: "Movies", join: "Director"} }
+      ];
+      // Create a model for the Genres field, using all the movies as training set.
+      var genreModel = analytics.newBatchModel(Movies.recs,
+                          genreFeatures, Movies.field("Genres"));
+      // Predict genres of a new movie
+      var newMovie = qm.store("Movies").newRec(/*{...}*/);
+      var result = genreModel.predict(newMovie);
+      \end{lstlisting}
+
+   \subsection{Time series processing}
+      The following example demonstrates how to perform time series resampling, feature vector computation and prediction.
+
+      \begin{figure}[h]
+      \begin{center}
+      \includegraphics[width=0.5\textwidth]{timeSeries.png}
+      \end{center}
+      \caption{Time series processing architecture}
+      \end{figure}
+
+      \begin{lstlisting}[caption=Time series processing] 	
+      // Initialize resamper from Raw to Resampled store. This results in
+      // in an equaly spaced time series with 10 second interval.
+      Raw.addStreamAggr({
+          name: "Resample10second", type: "resampler",
+          outStore: "Resampled", timestamp: "Time",
+          fields: [{ name: "Value", interpolator: "previous" }],
+          createStore: false, interval: 10 * 1000
+      });
+      // Initialize stream aggregates on Resampled store for computing
+      // 1 minute and 10 minute exponential moving averages.
+      Resampled.addStreamAggr({
+          name: "tick", type: "timeSeriesTick",
+          timestamp: "Time", value: "Value"
+      });
+      Resampled.addStreamAggr({
+          name: "ema1m", type: "ema",
+          inAggr: "tick", emaType: "previous", interval: 60000
+      });
+      Resampled.addStreamAggr({
+          name: "ema10m", type: "ema",
+          inAggr: "tick", emaType: "previous", interval: 600000
+      });
+      // Buffer for keeping track of the record from 1 minute ago
+      Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6 });
+
+      // Declare features from the resampled timeseries
+      var ftrSpace = analytics.newFeatureSpace([
+          { type: "numeric", source: "Resampled", field: "Value" },
+          { type: "numeric", source: "Resampled", field: "Ema1" },
+          { type: "numeric", source: "Resampled", field: "Ema2" },
+          { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
+      ]);
+      // Initialize linear regression model.
+      var linreg = analytics.newRecLinReg({ dim: ftrSpace.dim, forgetFact: 1.0 });
+      // We register a trigger to Resampled store
+      Resampled.addTrigger({
+          onAdd: function (val) {
+              // Get the latest value for EMAs
+              val.Ema1 = Resampled.getStreamAggr("ema1m").val.Val;
+              val.Ema2 = Resampled.getStreamAggr("ema10m").val.Val;
+              // Get the id of the record from a minute ago.
+              var trainRecId = Resampled.getStreamAggr("delay").val.last;;
+              // Update the model
+              linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
+          }
+      });
+
+      \end{lstlisting}
 
 
-\subsection{Text processing, classification and regression}
 
-This example shows how to extract features from the movie dataset and use them to build classification and regression models to predict movie genre and rating.
-
-\begin{lstlisting}[caption={Text mining: storage, feature extraction, classification and regression}] 	
-// Import analytics module
-var analytics = require("analytics.js");
-// Loading in the dataset.
-qm.load.jsonFile(Movies, "./sandbox/movies/movies.json");
- 	
-// Declare the features we will use to build genre classification models
-var genreFeatures = [
-    { type: "text", source: "Movies", field: "Title" },
-    { type: "text", source: "Movies", field: "Plot" },
-    { type: "join", source: { store: "Movies", join: "Actor" } },
-    { type: "join", source: { store: "Movies", join: "Director"} }
-];
-// Create a model for the Genres field, using all the movies as training set.
-var genreModel = analytics.newBatchModel(Movies.recs,
-                    genreFeatures, Movies.field("Genres"));
-// Predict genres of a new movie
-var newMovie = qm.store("Movies").newRec(/*{...}*/);
-var result = genreModel.predict(newMovie);
-\end{lstlisting}
-
-
-
-\subsection{Time series processing}
-The following example demonstrates how to perform time series resampling, feature vector computation and prediction.
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[width=0.5\textwidth]{timeSeries.png}
-\end{center}
-\caption{Time series processing architecture}
-\end{figure}
-
-\begin{lstlisting}[caption=Time series processing] 	
-// Initialize resamper from Raw to Resampled store. This results in
-// in an equaly spaced time series with 10 second interval.
-Raw.addStreamAggr({
-    name: "Resample10second", type: "resampler",
-    outStore: "Resampled", timestamp: "Time",
-    fields: [{ name: "Value", interpolator: "previous" }],
-    createStore: false, interval: 10 * 1000
-});
-// Initialize stream aggregates on Resampled store for computing
-// 1 minute and 10 minute exponential moving averages.
-Resampled.addStreamAggr({
-    name: "tick", type: "timeSeriesTick",
-    timestamp: "Time", value: "Value"
-});
-Resampled.addStreamAggr({
-    name: "ema1m", type: "ema",
-    inAggr: "tick", emaType: "previous", interval: 60000
-});
-Resampled.addStreamAggr({
-    name: "ema10m", type: "ema",
-    inAggr: "tick", emaType: "previous", interval: 600000
-});
-// Buffer for keeping track of the record from 1 minute ago
-Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6 });
-
-// Declare features from the resampled timeseries
-var ftrSpace = analytics.newFeatureSpace([
-    { type: "numeric", source: "Resampled", field: "Value" },
-    { type: "numeric", source: "Resampled", field: "Ema1" },
-    { type: "numeric", source: "Resampled", field: "Ema2" },
-    { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
-]);
-// Initialize linear regression model.
-var linreg = analytics.newRecLinReg({ dim: ftrSpace.dim, forgetFact: 1.0 });
-// We register a trigger to Resampled store
-Resampled.addTrigger({
-    onAdd: function (val) {
-        // Get the latest value for EMAs
-        val.Ema1 = Resampled.getStreamAggr("ema1m").val.Val;
-        val.Ema2 = Resampled.getStreamAggr("ema10m").val.Val;
-        // Get the id of the record from a minute ago.
-        var trainRecId = Resampled.getStreamAggr("delay").val.last;;
-        // Update the model
-        linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
-    }
-});
-
-\end{lstlisting}
 
 
 \subsection{Graph analysis}
@@ -259,17 +257,13 @@ The result shows that...
 The complete script is written in JS, while the Clauset-Newman-Moore community detection algorithm \cite{clauset-newman-moore} executes in highly optimized C++ SNAP code.
 
 \section{Conclusions}
-
-
+   Concluding remarks.
 
 \subsubsection*{Acknowledgments}
-The authors gratefully acknowledge that the funding for this work was provided by the project X-LIKE (ICT-257790-STREP)\cite{xlike}.
+   The authors gratefully acknowledge that the funding for this work was provided by the project X-LIKE (ICT-257790-STREP)\cite{xlike}.
 
-
-%\subsubsection*{References}
 
 \bibliographystyle{unsrt}
 \bibliography{qminer}
-
 
 \end{document}
