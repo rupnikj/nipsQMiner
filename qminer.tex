@@ -169,16 +169,11 @@ The following example demonstrates how to perform time series prediction. The ex
       \end{figure}
 
       \begin{lstlisting}[caption=Time series processing] 	
-      // Initialize resamper from Raw to Resampled store. This results in
-      // in an equaly spaced time series with 10 second interval.
-      Raw.addStreamAggr({
-          name: "Resample10second", type: "resampler",
-          outStore: "Resampled", timestamp: "Time",
-          fields: [{ name: "Value", interpolator: "previous" }],
-          createStore: false, interval: 10 * 1000
-      });
-      // Initialize stream aggregates on Resampled store for computing
-      // 1 minute and 10 minute exponential moving averages.
+      // The store "Raw" holds the orignial time series data, and the
+      // store "Resampled" stores the series resampled every 10 seconds.
+      Raw.addStreamAggr({name: "Resamp10s", type: "resampler",
+      //    outStore: "Resampled", \*resampling params*\});
+      // Initialize stream aggregates on Resampled store for computing 1 minute and 10 minute exponential moving averages.
       Resampled.addStreamAggr({
           name: "tick", type: "timeSeriesTick",
           timestamp: "Time", value: "Value"
@@ -220,7 +215,7 @@ The following example demonstrates how to perform time series prediction. The ex
 
 \subsection{Graph analysis}
 
-QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}. 
+QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}.
 The following example shows loading of a graph, computing communities and visualizing the results.
 
 The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes represent co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network.
