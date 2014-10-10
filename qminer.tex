@@ -134,7 +134,7 @@ QMiner lets you get from data to working models exposed through web service API 
 
 The example in this section demonstrates how to extract features from the movie dataset to build classification and regression models to predict movie genre and rating.
 
-      First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). (Source is the \emph{data store} from which we want to extract the feature; data store very roughly corresponds to table in relational databases.) We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}).
+First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). (Source is the \emph{data store} from which we want to extract the feature; data store very roughly corresponds to table in relational databases.) We can now run batch learner that returns the model that tries to predict movie genres using the whole data set for training (in this case, the model is stored in the \texttt{genreModel} variable). Once we saved the model we can easily use it for prediction (for example, \texttt{var newGenre = genreModel.predict(newMovie);}).
 
       \begin{lstlisting}[caption={Text mining: storage, feature extraction, classification and regression}] 	
       // Import analytics module
@@ -159,7 +159,7 @@ The example in this section demonstrates how to extract features from the movie 
 
 \subsection{Time series processing}
 
-The following example demonstrates how to perform time series resampling, feature vector computation and prediction.
+The following example demonstrates how to perform time series prediction. The example uses stream aggregates to first resample incoming time series into a equaly spaced time series, and computs 1 and 10 minute exponantional moving average (EMA) from it. The learn the prediction model we construct a feature vector containing the numeric value, the two EMAs and the date features (time of day, day of week, month) and send it to incremental linear regression model.
 
       \begin{figure}[h]
       \begin{center}
