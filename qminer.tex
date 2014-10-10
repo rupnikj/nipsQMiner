@@ -103,7 +103,7 @@ The core blocks of the system are as follows.
 
 \textbf{Storage and index layer:} The basic storage abstractions are similar to databases: the data is organized around stores (tables), one data point inside a store corresponds to a record (row or instance) and one record consists of one or more fields (columns or features). Index layer provides support for indexing and retrieving records. Currently, the system contains several indices: (a) inverted index, used to index discrete values and free text, and (b) geospatial index, which can be used to index geographic locations presented as longitude and latitude pairs. There are several additional indices in implementation at the moment, which will extend the system: (c) B-tree, used to index linearly ordered data types, such as number and dates, and (d) local proximity hashing, used to answer nearest neighbour queries on high-dimensional data such as sparse vectors. Indices can be accessed directly through a JSon-based query languages. The indices are also used by Analytics layer for various tasks, such as describing and extracting features, and for sampling.
 
-\textbf{Stream aggregates:} Aggregates correspond to algorithms which take a stream of records, and maintain some aggregate statistics of the stream. The aggregate connect to a store, and update their state as new records are added to the store. QMiner contains the a large collection of stream aggregates, e.g. statistical moments, exponential moving average, resampling and merging of streams, interpolation, extrapolation. In addition, when working in javascript API, new stream aggregates can be implemented directly in javascript.
+\textbf{Stream aggregates:} Aggregates correspond to algorithms which take a stream of records, and maintain some aggregate statistics of the stream. The aggregate connect to a store, and update their state as new records are added to the store. QMiner contains a large collection of stream aggregates, e.g. statistical moments, exponential moving average, resampling and merging of streams, interpolation, extrapolation. In addition, when working in javascript API, new stream aggregates can be implemented directly in javascript.
 
 \textbf{Feature extractors:} A feature extractor enables mapping records to linear algebra vectors (supports dense and sparse vectors). The core framework for feature extractors enables constructing and gluing several types of feature extractors and automatically performs all the necessary bookkeeping. Feature extractors include: numeric feature extractors, text feature extractors (bag of words), element indicator vectors and set indicator vectors (multi-label). In addition, when working with the javascript API, feature extractors implemented as javascript functions are supported.
 
@@ -147,7 +147,6 @@ First, we import the analytics module which provides machine learning algorithms
           { type: "constant", source: "Movies" },
           { type: "text", source: "Movies", field: "Title" },
           { type: "text", source: "Movies", field: "Plot" },
-          { type: "join", source: { store: "Movies", join: "Actor" } },
           { type: "join", source: { store: "Movies", join: "Director"} }
       ];
       // Create a model for the Genres field, using all the movies as training set.
@@ -155,60 +154,60 @@ First, we import the analytics module which provides machine learning algorithms
          Movies.recs, genreFeatures, Movies.field("Genres"));
       // Predict genres of a new movie
       var newMovie = qm.store("Movies").newRec({
-         "Title":"Unnatural Selection",
-         "Plot":"When corpses are found with organs missing ...",
-         "Year":1996,
-         "Rating":6.200000,
-         "Genres":["Horror", "Sci-Fi"],
-         "Director":{"Name":"Baggs Bill", "Gender":"Unknown"},
-         "Actor":[
-            {"Name":"Beevers Geoffrey", "Gender":"Male"},
-            {"Name":"Bradshaw Stephen (I)", "Gender":"Male"},
-            {"Name":"Brooks Keith (III)", "Gender":"Male"},
-         ]
+         Title:"Unnatural Selection",
+         Plot:"When corpses are found with organs missing ...",        
+         Genres:["Horror", "Sci-Fi"],
+         Director:{Name:"Baggs Bill", Gender:"Unknown"}
       });
       var predictedGenre = genreModel.predict(newMovie);
       \end{lstlisting}
 
 \subsection{Time series processing}
 
-The following example demonstrates how to perform time series prediction. The example uses stream aggregates to first resample incoming time series into a equaly spaced time series, and computs 1 and 10 minute exponantional moving average (EMA) from it. To learn the prediction model we construct a feature vector containing the numeric value, the two EMAs and the date features (time of day, day of week, month) and send it to incremental linear regression model.
+The following example demonstrates how to perform time series prediction. The example uses stream aggregates (rounded rectangles in Figure \ref{fig:timeSeries}) to first resample incoming time series into a equaly spaced time series, on which two exponential moving averages (EMAs) are computed. To learn the prediction model we construct a feature vector containing the numeric value, the two EMAs and the date features (time of day, day of week, month) and send it to incremental linear regression model. A 1 minute delay operator is applied to the input
+ variables, which corresponds to a 1 minute prediction horizon.
 
-The example involves two \emph{data stores}: \texttt{Raw} and \texttt{Resampled}. The \texttt{Raw} records represent time series measurement pairs (timestamp, value) and \texttt{Resampled} stores the resampled time series, together with results of two smoothers.
+The example involves two \emph{data stores}: \texttt{Raw} and \texttt{Resampled}. The \texttt{Raw} records represent time series measurement pairs (timestamp, value) and \texttt{Resampled} stores the resampled time series, together with the results of two smoothers. Each time a record is added to \texttt{Raw} we update the resampler. The resampler may insert a record in
+\texttt{Resampled} based on the interpolation used. Each time a record is added to \texttt{Resampled} several operations are executed: computation of two smoothers, update of the delay operator, enrichment the resampled record with the results of the smoothers, and the update of the linear regression model. 
 
-      \begin{figure}\label{timeSeries}[h]
+      \begin{figure}[h]
       \begin{center}
       \includegraphics[width=0.5\textwidth]{timeSeries.png}
       \end{center}
-      \caption{Time series processing architecture}
+      \caption{Time series processing architecture}\label{fig:timeSeries}
       \end{figure}
 
       \begin{lstlisting}[caption=Time series processing] 	
       
       
       // Here we connect several stream aggregates to the stores: a resampler, a connector, two smoothers with different decays and a delay operator. These correspond to blue boxes in figure 1.
-      Raw.addStreamAggr({name: "Resamp10s", type: "resampler",
+      var sr = Raw.addStreamAggr({name: "Resamp10s", type: "resampler",
           outStore: "Resampled"/*, resampling params*/});
-      Resampled.addStreamAggr({name: "tick"/*, aggregate params*/});
-      Resampled.addStreamAggr({name: "ema1m", type: "ema", interval: 60000/*, aggregate params*/});
-      Resampled.addStreamAggr({name: "ema10m", type: "ema", interval: 600000/*, aggregate params*/});
-      Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6 });
+      var s0 = Resampled.addStreamAggr({name: "tick", type: "timeSeriesTick"/*, aggregate params*/});
+      var s1 = Resampled.addStreamAggr({name: "EMA1m", type: "ema", interval: 60000/*, aggregate params*/});
+      var s2 = Resampled.addStreamAggr({name: "EMA10m", type: "ema", interval: 600000/*, aggregate params*/});
+      var s3 = Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6 });
 
       // Declare features from the resampled timeseries
-      var ftrSpace = analytics.newFeatureSpace([/*params*/]);
+      var ftrSpace = analytics.newFeatureSpace([
+          { type: "numeric", source: "Resampled", field: "Value" },
+          { type: "numeric", source: "Resampled", field: "Ema1" },
+          { type: "numeric", source: "Resampled", field: "Ema2" },
+          { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
+      ]);
       // Initialize linear regression model
       var linreg = analytics.newRecLinReg(/*params */);
       
-      // We register a trigger to Resampled store
-      Resampled.addTrigger({
-          onAdd: function (val) {
-              // Get the latest value for EMAs
-              val.Ema1 = Resampled.getStreamAggr("ema1m").val.Val;
-              val.Ema2 = Resampled.getStreamAggr("ema10m").val.Val;
+      // We add the final stream aggregate that enriches the record and updates the regression model
+      var s4 = Resampled.addStreamAggr(new function(){
+          onAdd: function (rec) {
+              // Save the latest values of EMAs in the
+              rec.Ema1 = s1.getFlt();
+              rec.Ema2 = s2.getFlt();
               // Get the id of the record from a minute ago.
-              var trainRecId = Resampled.getStreamAggr("delay").val.last;;
-              // Update the model
-              linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), val.Value);
+              var trainRecId = s3.val.last;
+              // Update the model: the input is delayed by 1 minute and the output is the current value
+              linreg.learn(ftrSpace.ftrVec(Resampled[trainRecId]), rec.Value);
           }
       });
       \end{lstlisting}
@@ -244,7 +243,7 @@ The results of analysis shows that the co-authoring graph has 12 communities lab
 
 
 \subsubsection*{Acknowledgments}
-   The authors gratefully acknowledge that the funding for this work was provided by the project X-LIKE (ICT-257790-STREP)\cite{xlike}.
+The research leading to these results has received funding from the European Union Seventh Framework Programme (FP7/2007-2013) under grant agreement no 317534 (the Sophocles project) as well as the project X-LIKE (ICT-257790-STREP)\cite{xlike} and SYMPHONY FP7 Collaborative project (FP7-ICT-611875).
 
 
 \bibliographystyle{unsrt}
