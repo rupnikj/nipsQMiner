@@ -144,24 +144,39 @@ First, we import the analytics module which provides machine learning algorithms
        	
       // Declare the features we will use to build genre classification models
       var genreFeatures = [
+          { type: "constant", source: "Movies" },
           { type: "text", source: "Movies", field: "Title" },
           { type: "text", source: "Movies", field: "Plot" },
           { type: "join", source: { store: "Movies", join: "Actor" } },
           { type: "join", source: { store: "Movies", join: "Director"} }
       ];
       // Create a model for the Genres field, using all the movies as training set.
-      var genreModel = analytics.newBatchModel(Movies.recs,
-                          genreFeatures, Movies.field("Genres"));
+      var genreModel = analytics.newBatchModel(
+         Movies.recs, genreFeatures, Movies.field("Genres"));
       // Predict genres of a new movie
-      var newMovie = qm.store("Movies").newRec(/*{...}*/);
-      var result = genreModel.predict(newMovie);
+      var newMovie = qm.store("Movies").newRec({
+         "Title":"Unnatural Selection",
+         "Plot":"When corpses are found with organs missing ...",
+         "Year":1996,
+         "Rating":6.200000,
+         "Genres":["Horror", "Sci-Fi"],
+         "Director":{"Name":"Baggs Bill", "Gender":"Unknown"},
+         "Actor":[
+            {"Name":"Beevers Geoffrey", "Gender":"Male"},
+            {"Name":"Bradshaw Stephen (I)", "Gender":"Male"},
+            {"Name":"Brooks Keith (III)", "Gender":"Male"},
+         ]
+      });
+      var predictedGenre = genreModel.predict(newMovie);
       \end{lstlisting}
 
 \subsection{Time series processing}
 
-The following example demonstrates how to perform time series prediction. The example uses stream aggregates to first resample incoming time series into a equaly spaced time series, and computs 1 and 10 minute exponantional moving average (EMA) from it. The learn the prediction model we construct a feature vector containing the numeric value, the two EMAs and the date features (time of day, day of week, month) and send it to incremental linear regression model.
+The following example demonstrates how to perform time series prediction. The example uses stream aggregates to first resample incoming time series into a equaly spaced time series, and computs 1 and 10 minute exponantional moving average (EMA) from it. To learn the prediction model we construct a feature vector containing the numeric value, the two EMAs and the date features (time of day, day of week, month) and send it to incremental linear regression model.
 
-      \begin{figure}[h]
+The example involves two \emph{data stores}: \texttt{Raw} and \texttt{Resampled}. The \texttt{Raw} records represent time series measurement pairs (timestamp, value) and \texttt{Resampled} stores the resampled time series, together with results of two smoothers.
+
+      \begin{figure}\label{timeSeries}[h]
       \begin{center}
       \includegraphics[width=0.5\textwidth]{timeSeries.png}
       \end{center}
@@ -169,35 +184,21 @@ The following example demonstrates how to perform time series prediction. The ex
       \end{figure}
 
       \begin{lstlisting}[caption=Time series processing] 	
-      // The store "Raw" holds the orignial time series data, and the
-      // store "Resampled" stores the series resampled every 10 seconds.
+      
+      
+      // Here we connect several stream aggregates to the stores: a resampler, a connector, two smoothers with different decays and a delay operator. These correspond to blue boxes in figure 1.
       Raw.addStreamAggr({name: "Resamp10s", type: "resampler",
-      //    outStore: "Resampled", \*resampling params*\});
-      // Initialize stream aggregates on Resampled store for computing 1 minute and 10 minute exponential moving averages.
-      Resampled.addStreamAggr({
-          name: "tick", type: "timeSeriesTick",
-          timestamp: "Time", value: "Value"
-      });
-      Resampled.addStreamAggr({
-          name: "ema1m", type: "ema",
-          inAggr: "tick", emaType: "previous", interval: 60000
-      });
-      Resampled.addStreamAggr({
-          name: "ema10m", type: "ema",
-          inAggr: "tick", emaType: "previous", interval: 600000
-      });
-      // Buffer for keeping track of the record from 1 minute ago
+          outStore: "Resampled"/*, resampling params*/});
+      Resampled.addStreamAggr({name: "tick"/*, aggregate params*/});
+      Resampled.addStreamAggr({name: "ema1m", type: "ema", interval: 60000/*, aggregate params*/});
+      Resampled.addStreamAggr({name: "ema10m", type: "ema", interval: 600000/*, aggregate params*/});
       Resampled.addStreamAggr({ name: "delay", type: "recordBuffer", size: 6 });
 
       // Declare features from the resampled timeseries
-      var ftrSpace = analytics.newFeatureSpace([
-          { type: "numeric", source: "Resampled", field: "Value" },
-          { type: "numeric", source: "Resampled", field: "Ema1" },
-          { type: "numeric", source: "Resampled", field: "Ema2" },
-          { type: "multinomial", source: "Resampled", field: "Time", datetime: true }
-      ]);
-      // Initialize linear regression model.
-      var linreg = analytics.newRecLinReg({ dim: ftrSpace.dim, forgetFact: 1.0 });
+      var ftrSpace = analytics.newFeatureSpace([/*params*/]);
+      // Initialize linear regression model
+      var linreg = analytics.newRecLinReg(/*params */);
+      
       // We register a trigger to Resampled store
       Resampled.addTrigger({
           onAdd: function (val) {
@@ -214,13 +215,13 @@ The following example demonstrates how to perform time series prediction. The ex
 
 
 \subsection{Graph analysis}
-QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}. 
+QMiner supports handling of graph data by providing JavaScript API for the integrated SNAP library \cite{snap}.
 The script in code fragment 3 is an example of loading a graph, computing communities and visualizing the results.
 
 After importing the required modules for graph analysis and visualization, an edge-list graph file is loaded into a new undirected graph. The graph represents co-authoring network of Slovenian researchers from biotechnical science in 2013. Nodes of the graph represent researchers, while edges between nodes indicate co-authoring of at least on publication. Real networks often have community structure with several regions of internally densely connected nodes. Communities in co-authoring network can indicate groups of strongly connected researchers from a research lab or a similar organization, or simply groups of scientist with a common research interest. Number, sizes and connectivity between communities reveals the cohesiveness of a network. Following the simplification of the graph by removing weekly connected nodes (with degree 3 or less), the Clauset-Newman-Moore \cite{clauset-newman-moore} community detection algorithm is applied to compute communities. In the final step the graph is plotted using force-directed layout, with node colors corresponding to communities. The complete script in Code fragment 3 is written in JavaScript, but some of the components, such as community detection algorithm are executing in highly optimized C++ SNAP code.
 \begin{figure}[h]
 \begin{center}
-\includegraphics[scale=0.25]{communities_labeled.jpg} 
+\includegraphics[scale=0.25]{communities_labeled.jpg}
 \caption{Communities of co-authoring graph}
 \end{center}
 \end{figure}
