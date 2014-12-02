@@ -116,15 +116,13 @@ In this section we provide an overview of the main unique design elements which 
 
 QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of the performance of components implemented in C++ and libraries such as Intel MKL. We will demonstrate the system on three different tasks: text classification, time series prediction and community detection on graphs.
 
-\subsection{Text processing, classification and regression}
+\subsection{Text processing and classification}
 
 The example in this section demonstrates how to extract features from a movie dataset and build classification models for predicting movie genres.
 
 First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). Source is the \emph{data store} from which we want to extract the feature. We can now run batch learner the whole data set for training, that returns the model for predicting movie genres. In the example, the model is stored in the \texttt{genreModel} variable.
 
 \begin{lstlisting}[caption={Text mining: storage, feature extraction and classification.}] 	
-// Import analytics module
-var analytics = require("analytics.js");
 // Loading in the dataset.
 qm.load.jsonFile(Movies, "./sandbox/movies/movies.json");
 // Declare the features we will use to build classification models
@@ -210,10 +208,6 @@ After importing the required modules for graph analysis and visualization, an ed
 \end{figure}
 
 \begin{lstlisting}[caption=Graph analysis]
-// Import snap module
-snap = require("snap.js");
-// Import visualization module
-viz = require("visualization.js");
 // Loading a graph file and creating a new undirected graph
 var g = snap.newUGraph("biotechnology_2013.edg");
 // Simplifying graph by removing all the nodes with degree <= 3
