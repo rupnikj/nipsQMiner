@@ -207,7 +207,7 @@ var s4 = Resampled.addStreamAggr(new function() {
     var trainRecId = s3.val.last;
     // Compute feature vector of the record
     var ftrVec = ftrSpace.ftrVec(Resampled[trainRecId]);
-    // Update the regression model: the input is delayed 
+    // Update the regression model: the input is delayed
     // by 1 minute and the output is the current value
     linreg.learn(ftrVec, rec.Value);
   }
@@ -253,4 +253,4 @@ The research leading to these results has received funding from several European
 \bibliographystyle{unsrt}
 \bibliography{qminer}
 
-\end{document}
+\end{document} 
