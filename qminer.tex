@@ -52,7 +52,7 @@
 \title{QMiner: Data Analytics Platform for Processing Streams of Structured and Unstructured Data}
 
 \author{
-Blaz Fortuna\thanks{Blaz Fortuna is currently postdoc at Ghent University, Belgium}, Jan Rupnik, Janez Brank, Carolina Fortuna\thanks{Carolina Fortuna is currently postdoc at Ghent University, Belgium}, Viktor Jovanoski, \\
+Blaz Fortuna\thanks{Blaz Fortuna is currently a postdoc at Ghent University, Belgium}, Jan Rupnik, Janez Brank, Carolina Fortuna\thanks{Carolina Fortuna is currently a postdoc at Ghent University, Belgium}, Viktor Jovanoski, \\
 \textbf{Mario Karlovcec, Blaz Kazic, Klemen Kenda, Gregor Leban, Andrej Muhic,} \\
 \textbf{Blaz Novak, Jost Novljan, Miha Papler, Luis Rei, Blaz Sovdat, Luka Stopar,} \\
 \textbf{Marko Grobelnik, Dunja Mladenic} \\
@@ -76,7 +76,7 @@ QMiner is an open source analytics platform for performing large scale data anal
 \section{Introduction}
 QMiner grew out of EU Framework Programme research projects in the areas of text, web, and stream mining over the last couple of years. The main requirements for QMiner are derived from the need for the rapid developed of solutions focused on user interactivity and the ability to operate on large data sets (hundreds of gigabytes) in real-time on high-end commodity hardware. These goals and constraints resulted in a unique set of features that we implemented in QMiner.
 
-Applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API the user can easily compose complex data processing pipelines and integrate the them with other systems via RESTful web services. The core system is based on a C++ library and can be included into custom C++ projects, thus providing them with stream processing and data analytics capabilities. Event Registry\footnote{http://eventregistry.org/}\cite{eventRegistry} is one example of a system, which is built around QMiner storage and analytic modules.
+Applications are implemented in JavaScript, making it easy for novice users to get started. Using the JavaScript API the user can easily compose complex data processing pipelines and integrate the them with other systems via RESTful web services. The core system is based on a C++ library and can be included into custom C++ projects, thus providing them with stream processing and data analytics capabilities. Event Registry\cite{eventRegistry} is one example of a system, which is built around QMiner storage and analytic modules.
 
 The system is available as open source project on GitHub under AGPL licence. The repository contains source code, introduction guide, complete documentation of QMiner's JavaScript APIs and examples showcasing various uses of QMiner.
 
@@ -116,15 +116,13 @@ In this section we provide an overview of the main unique design elements which 
 
 QMiner lets you get from data to working models exposed through web service API in less than an hour. Most applications can be scripted fully in the JavaScript layer, taking advantage of the performance of components implemented in C++ and libraries such as Intel MKL. We will demonstrate the system on three different tasks: text classification, time series prediction and community detection on graphs.
 
-\subsection{Text processing, classification and regression}
+\subsection{Text processing and classification}
 
 The example in this section demonstrates how to extract features from a movie dataset and build classification models for predicting movie genres.
 
 First, we import the analytics module which provides machine learning algorithms. Next, we load the data and enumerate features we would like to extract from the data set. For each feature we need to specify its type (for example, \texttt{text}), its source (for example, \texttt{Movies}), and name (for example, \texttt{plot}). Source is the \emph{data store} from which we want to extract the feature. We can now run batch learner the whole data set for training, that returns the model for predicting movie genres. In the example, the model is stored in the \texttt{genreModel} variable.
 
 \begin{lstlisting}[caption={Text mining: storage, feature extraction and classification.}] 	
-// Import analytics module
-var analytics = require("analytics.js");
 // Loading in the dataset.
 qm.load.jsonFile(Movies, "./sandbox/movies/movies.json");
 // Declare the features we will use to build classification models
@@ -210,10 +208,6 @@ After importing the required modules for graph analysis and visualization, an ed
 \end{figure}
 
 \begin{lstlisting}[caption=Graph analysis]
-// Import snap module
-snap = require("snap.js");
-// Import visualization module
-viz = require("visualization.js");
 // Loading a graph file and creating a new undirected graph
 var g = snap.newUGraph("biotechnology_2013.edg");
 // Simplifying graph by removing all the nodes with degree <= 3
@@ -233,7 +227,7 @@ This paper presents QMiner, an open source analytics platform for performing lar
 Architecture of the system with core implemented in C++ and JavaScript layer on top of it enables ease of use, without sacrificing performance. As illustrated with examples of text classification, time series processing and graph analysis, complete workflows can be implemented with simple scripts.
 
 \subsubsection*{Acknowledgments}
-The research leading to these results has received funding from the European Union Seventh Framework Programme (FP7/2007-2013) under grant agreement no 317534 (the Sophocles project) as well as the project X-LIKE (ICT-257790-STREP)\cite{xlike} and SYMPHONY FP7 Collaborative project (FP7-ICT-611875).
+The research leading to these results has received funding from the European Union Seventh Framework Programme (FP7/2007-2013) under grant agreement no 317534 (the Sophocles project) as well as the project X-LIKE (ICT-257790-STREP) and SYMPHONY FP7 Collaborative project (FP7-ICT-611875).
 
 \bibliographystyle{unsrt}
 \bibliography{qminer}
