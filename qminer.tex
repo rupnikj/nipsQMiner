@@ -52,7 +52,7 @@
 \title{QMiner: Data Analytics Platform for Processing Streams of Structured and Unstructured Data}
 
 \author{
-Blaz Fortuna\footnote{Blaz Fortuna is currently postdoc at Ghent University, Belgium}, Jan Rupnik, Janez Brank, Carolina Fortuna\footnote{Carolina Fortuna is currently postdoc at Ghent University, Belgium}, Viktor Jovanoski, \\
+Blaz Fortuna\thanks{Blaz Fortuna is currently postdoc at Ghent University, Belgium}, Jan Rupnik, Janez Brank, Carolina Fortuna\thanks{Carolina Fortuna is currently postdoc at Ghent University, Belgium}, Viktor Jovanoski, \\
 \textbf{Mario Karlovcec, Blaz Kazic, Klemen Kenda, Gregor Leban, Andrej Muhic,} \\
 \textbf{Blaz Novak, Jost Novljan, Miha Papler, Luis Rei, Blaz Sovdat, Luka Stopar,} \\
 \textbf{Marko Grobelnik, Dunja Mladenic} \\
@@ -92,7 +92,7 @@ The core blocks of the system provide support for data storage, preprocessing an
 
 \textbf{Feature extractors:} A feature extractor enables mapping records to linear algebra vectors (supports dense and sparse vectors). The core framework for feature extractors enables constructing and gluing several types of feature extractors and automatically performs all the necessary bookkeeping. Feature extractors include: text feature extractors (bag of words with optional stemming, stop-word removal, n-gram extraction, hashing), numeric feature extractors, element indicator vectors and set indicator vectors (multi-label). In addition, when working with the JavaScript API, custom feature extractors can be implemented as JavaScript functions.
 
-\textbf{Linear algebra:} The library provides efficient representation and manipulation of linear algebra structures (dense and sparse vectors and matrices) directly in JavaScript. The library includes algorithms for solving linear systems and computing several matrix decompositions. Randomized algorithms enable solving of large scale problems, such as singular value decompositions\cite{tropp} on large structured or sparse matrices. QMiner can optionally be compiled with optimized Basic Linear Algebra libraries such as Intel MKL, providing additional boost in performance. 
+\textbf{Linear algebra:} The library provides efficient representation and manipulation of linear algebra structures (dense and sparse vectors and matrices) directly in JavaScript. The library includes algorithms for solving linear systems and computing several matrix decompositions. Randomized algorithms enable solving of large scale problems, such as singular value decompositions\cite{tropp} on large structured or sparse matrices. QMiner can optionally be compiled with optimized Basic Linear Algebra libraries such as Intel MKL, providing additional boost in performance.
 
 \textbf{Analytics:} The analytics components combine all components in order to implement various popular machine learning algorithms for clustering, dimensionality reduction, classification, regression and active-learning. The implementations can be easily applied directly to data stored in the storage layer. The analytics components are either implemented purely in C++ or alternatively in JavaScript, by using core C++ modules (such as linear algebra) to retain efficiency.
 
@@ -162,7 +162,7 @@ The example involves two \emph{data stores}: \texttt{Raw} and \texttt{Resampled}
 \end{figure}
 
 \begin{lstlisting}[caption=Time series processing] 	
-// Create and connect stream aggregates to the stores. 
+// Create and connect stream aggregates to the stores.
 // These correspond to blue boxes in figure 1.
 var sr = Raw.addStreamAggr({name: "Resamp10s", type: "resampler", outStore: "Resampled"/*, resampling parameters*/});
 var s0 = Resampled.addStreamAggr({name: "tick", type: "timeSeriesTick", /*aggregate parameters*/});
@@ -189,7 +189,7 @@ var s4 = Resampled.addStreamAggr(new function() {
     var trainRecId = s3.val.last;
     // Compute feature vector of the record
     var ftrVec = ftrSpace.ftrVec(Resampled[trainRecId]);
-    // Update the regression model: the input is delayed 
+    // Update the regression model: the input is delayed
     // by 1 minute and the output is the current value
     linreg.learn(ftrVec, rec.Value);
   }
@@ -238,4 +238,4 @@ The research leading to these results has received funding from the European Uni
 \bibliographystyle{unsrt}
 \bibliography{qminer}
 
-\end{document}
+\end{document} 
